@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación Musical - UkeCheck</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; }
+        h1 { color: #333; }
+        .container { max-width: 800px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn { display: inline-block; padding: 10px 15px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UkeCheck - Evaluación Musical</h1>
+        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv">
+        <button onclick="processFile()">Procesar Archivo</button>
+        <button onclick="exportToExcel()">Exportar a Excel</button>
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Nombre Completo</th>
+                    <th>Curso</th>
+                    <th>Puntaje Total</th>
+                    <th>Nota</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        let workbook;
+
+        function processFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                
+                displayData(jsonData);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function displayData(data) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row[0]}</td>
+                    <td>${row[1]}</td>
+                    <td>${row[row.length - 2]}</td>
+                    <td>${row[row.length - 1]}</td>
+                `;
+                tableBody.appendChild(tr);
+            }
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.table_to_sheet(document.getElementById('dataTable'));
+            XLSX.utils.book_append_sheet(wb, ws, "Evaluaciones");
+            XLSX.writeFile(wb, "evaluaciones_musicales.xlsx");
+        }
+    </script>
+</body>
+</html>
